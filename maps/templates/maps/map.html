@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Maps with Google Places API</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB1GIVqhfRZSP9QalUq_B9T0efp69Z4NIA"></script>
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Search for Restaurants</h1>
+    <form id="searchForm">
+        <input type="text" id="searchQuery" placeholder="Search for restaurants...">
+        <input type="number" id="minRating" placeholder="Minimum Rating (1-5)" min="1" max="5" step="0.1">
+        <button type="submit">Search</button>
+    </form>
+    <div id="map"></div>
+    <script>
+        // Initialize an array to hold the markers
+        let markers = [];
+
+        function initMap() {
+            // Center the map
+            const centerLocation = { lat: 33.7490, lng: -84.3880 }; // Example: Atlanta, GA
+
+            const map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 13,
+                center: centerLocation,
+            });
+
+            // Function to clear all markers from the map
+            function clearMarkers() {
+                markers.forEach(marker => marker.setMap(null));
+                markers = []; // Reset the markers array
+            }
+
+            // Function to fetch restaurants based on query and rating
+            function fetchRestaurants(query = '', minRating = 0) {
+                fetch(`/map/fetch-restaurants/?query=${query}&min_rating=${minRating}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.results) {
+                            clearMarkers(); // Clear existing markers
+                            data.results.forEach(restaurant => {
+                                // Filter by rating
+                                if (restaurant.rating >= minRating) {
+                                    const location = {
+                                        lat: restaurant.geometry.location.lat,
+                                        lng: restaurant.geometry.location.lng
+                                    };
+                                    const marker = new google.maps.Marker({
+                                        position: location,
+                                        map: map,
+                                        title: `${restaurant.name} (Rating: ${restaurant.rating})`
+                                    });
+                                    markers.push(marker); // Add the new marker to the array
+                                }
+                            });
+                        } else {
+                            console.error("Failed to fetch restaurant data:", data);
+                        }
+                    })
+                    .catch(error => console.error('Error fetching data:', error));
+            }
+
+            // Initial fetch without any query to show all nearby restaurants with rating > 0
+            fetchRestaurants();
+
+            // Handle form submission to search for restaurants
+            document.getElementById('searchForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const query = document.getElementById('searchQuery').value;
+                const minRating = parseFloat(document.getElementById('minRating').value) || 0;
+                map.setCenter(centerLocation); // Center map again on new search
+                fetchRestaurants(query, minRating);
+            });
+        }
+
+        window.onload = initMap;
+    </script>
+</body>
+</html>
