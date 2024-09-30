@@ -41,7 +41,7 @@
             }
 
             function fetchRestaurants(query = '', minRating = 0, maxDistance = 5000) {
-                fetch(`/map/fetch-restaurants/?query=${query}&min_rating=${minRating}&max_distance=${maxDistance}`)
+                fetch(`/fetch-restaurants/?query=${query}&min_rating=${minRating}&max_distance=${maxDistance}`)
                     .then(response => response.json())
                     .then(data => {
                         clearMarkers();
@@ -65,7 +65,7 @@
                                                 <h2>${restaurant.name}</h2>
                                                 <p>Rating: ${restaurant.rating}</p>
                                                 <p>${restaurant.vicinity}</p>
-                                                <a href="/map/restaurant-details/${restaurant.place_id}" target="_blank">View Details</a>
+                                                <a href="/restaurant-details/${restaurant.place_id}" target="_blank">View Details</a>
                                             </div>`;
                                         infoWindow.setContent(contentString);
                                         infoWindow.open(map, marker);

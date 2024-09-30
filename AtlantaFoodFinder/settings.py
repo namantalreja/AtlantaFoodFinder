@@ -48,7 +48,6 @@ SESSION_COOKIE_AGE = 60 * 60 * 24 * 30
 # Application definition
 
 INSTALLED_APPS = [
-    'maps',
     'users',
     'django.contrib.admin',
     'django.contrib.auth',

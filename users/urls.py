@@ -4,6 +4,8 @@ from .views import home, RegisterView, ResetPasswordView  # Import the view here
 from django.contrib.auth import views as auth_views
 from .views import profile
 from django.contrib.auth import views as auth_views
+from django.urls import path
+from . import views
 
 urlpatterns = [
     path('', home, name='users-home'),
@@ -17,4 +19,7 @@ urlpatterns = [
          name='password_reset_complete'),
     path('profile/', profile, name='users-profile'),
     path('logout/', auth_views.LogoutView.as_view(template_name='users/logout.html'), name='logout'),
+    path('restaurant-details/<str:place_id>/', views.restaurant_details, name='restaurant_details'),
+    path('fetch-restaurants/', views.fetch_restaurants, name='fetch_restaurants'),
+    path('map/', views.show_map, name='show_map'),
 ]
