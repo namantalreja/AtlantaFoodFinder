@@ -7,6 +7,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
+<<<<<<< Updated upstream
 from .models import FavoriteRestaurant, Profile  # Make sure Profile is imported here
 from .forms import UpdateUserForm, UpdateProfileForm
 import os
@@ -15,10 +16,24 @@ from dotenv import load_dotenv
 from django.http import JsonResponse
 from django.contrib.auth import login
 
+=======
+import os
+from dotenv import load_dotenv
+from django.http import JsonResponse
+import requests
+
+
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import FavoriteRestaurant
+
+from .forms import UpdateUserForm, UpdateProfileForm
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+>>>>>>> Stashed changes
 
 def home(request):
     return render(request, 'users/home.html')
-
 
 class ResetPasswordView(SuccessMessageMixin, PasswordResetView):
     template_name = 'users/password_reset.html'

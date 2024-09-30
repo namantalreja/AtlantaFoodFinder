@@ -4,17 +4,170 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ restaurant.name }}</title>
+    <style>
+        body {
+            background-color: #d5e7f3; /* Pastel blue background */
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .restaurant-details {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 800px; /* Max width for larger screens */
+            width: 100%; /* Full width */
+            margin-bottom: 20px; /* Space below the details */
+        }
+
+        .detail-item {
+            margin: 10px 0;
+            font-size: 1.2em; /* Font size for details */
+        }
+
+        .rating-container {
+            display: flex;
+            align-items: center; /* Align stars and text vertically */
+        }
+
+        .stars {
+            display: flex;
+            align-items: center; /* Align stars vertically */
+            margin-left: 10px; /* Space between rating and stars */
+        }
+
+        .star {
+            width: 20px; /* Width of star */
+            height: 20px; /* Height of star */
+            background-color: transparent; /* Transparent background */
+            mask: url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Cpath fill="white" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/%3E%3C/svg%3E') center / contain no-repeat;
+            margin-right: 5px; /* Space between stars */
+        }
+
+        .filled {
+            background-color: gold; /* Gold color for filled stars */
+        }
+
+        .map-image {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-top: 20px; /* Space above the map */
+        }
+
+        .button {
+            background-color: #f3b6c4; /* Pastel pink */
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            display: inline-block; /* Make it a block element */
+            margin-top: 20px; /* Space above the button */
+        }
+
+        .button:hover {
+            background-color: #f2849e; /* Darker pink on hover */
+        }
+
+        .review {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f9f9f9; /* Light background for reviews */
+            border-radius: 5px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
 <body>
     <h1>{{ restaurant.name }}</h1>
-    <p>Rating: {{ restaurant.rating }}</p>
-    <p>Address: {{ restaurant.formatted_address }}</p>
+    <div class="restaurant-details">
+        <div class="detail-item rating-container">
+            <strong>Rating:</strong>
+            <span id="ratingValue" style="margin-left: 5px;">{{ restaurant.rating }}</span> <!-- Added margin for spacing -->
+            <div class="stars" id="starRating"></div> <!-- Stars will be filled here -->
+        </div>
+
+        <!-- New reviews heading -->
+        <div class="detail-item">
+            <strong>Reviews:</strong>
+        </div>
+
+        <!-- Container for reviews -->
+        <div id="reviewsContainer" class="detail-item"></div>
+
+        <div class="detail-item"><strong>Address:</strong> {{ restaurant.formatted_address }}</div>
+        <div class="detail-item"><strong>Phone:</strong> {{ restaurant.formatted_phone_number }}</div>
+        <div class="detail-item"><strong>Website:</strong> <a href="{{ restaurant.website }}" target="_blank">{{ restaurant.website }}</a></div>
+
+        <!-- Static Google Map Image -->
+        <img id="mapImage" class="map-image" alt="Map of {{ restaurant.name }}">
+    </div>
 
     <!-- Add to Favorites Button -->
-    <a href="{% url 'add_to_favorites' restaurant.place_id %}?name={{ restaurant.name }}">Add to Favorites</a>
+    <a href="{% url 'add_to_favorites' restaurant.place_id %}?name={{ restaurant.name }}" class="button" id="favoriteButton">Add to Favorites</a>
 
-    <p>Phone: {{ restaurant.formatted_phone_number }}</p>
-    <p>Website: <a href="{{ restaurant.website }}" target="_blank">{{ restaurant.website }}</a></p>
-    <p>Google Maps: <a href="{{ restaurant.url }}" target="_blank">View on Google Maps</a></p>
+    <script>
+        const favoriteButton = document.getElementById('favoriteButton');
+        let isFavorited = false;
+
+        favoriteButton.addEventListener('click', function(event) {
+            if (isFavorited) {
+                event.preventDefault(); // Prevent default action if already added
+                alert('This restaurant is already added to favorites.');
+            } else {
+                isFavorited = true;
+                favoriteButton.textContent = 'Added';
+                favoriteButton.style.backgroundColor = '#b2e0b2'; // Change to pastel green
+            }
+        });
+
+        // Function to set the Google Maps image
+        function setMapImage(lat, lng) {
+            const apiKey = 'AIzaSyB1GIVqhfRZSP9QalUq_B9T0efp69Z4NIA'; // Your Google Maps API key
+            const mapImageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=15&size=600x300&markers=color:red%7Clabel:C%7C${lat},${lng}&key=${apiKey}`;
+            document.getElementById('mapImage').src = mapImageUrl;
+        }
+
+        // Call the function with the restaurant's location
+        setMapImage({{ restaurant.geometry.location.lat }}, {{ restaurant.geometry.location.lng }});
+
+        // Function to render stars based on rating
+        function renderStars(rating) {
+            const starContainer = document.getElementById('starRating');
+            starContainer.innerHTML = ''; // Clear existing stars
+            const fullStars = Math.floor(rating); // Get full stars
+            const halfStar = rating % 1 >= 0.5; // Determine if there's a half star
+
+            // Create all 5 stars
+            for (let i = 0; i < 5; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                if (i < fullStars) {
+                    star.classList.add('filled'); // Add filled class for full stars
+                } else if (halfStar && i === fullStars) {
+                    star.classList.add('filled'); // Add filled class for half star
+                }
+                starContainer.appendChild(star); // Append star to the container
+            }
+        }
+
+        // Call renderStars with the restaurant's rating
+        renderStars(parseFloat(document.getElementById('ratingValue').textContent));
+
+    </script>
 </body>
 </html>
