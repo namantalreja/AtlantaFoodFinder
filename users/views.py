@@ -1,6 +1,6 @@
 
 from django.views import View
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, LogoutView
 from .forms import RegisterForm, LoginForm
 from django.urls import reverse_lazy
 from django.contrib.auth.views import PasswordResetView
@@ -75,9 +75,6 @@ class CustomLoginView(LoginView):
 
         # else browser session will be as long as the session cookie time "SESSION_COOKIE_AGE" defined in settings.py
         return super(CustomLoginView, self).form_valid(form)
-
-
-
 
 @login_required
 def profile(request):
