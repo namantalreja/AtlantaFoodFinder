@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ restaurant.name }}</title>
+</head>
+<body>
+    <h1>{{ restaurant.name }}</h1>
+    <p>Rating: {{ restaurant.rating }}</p>
+    <p>Address: {{ restaurant.formatted_address }}</p>
+    <p>Phone: {{ restaurant.formatted_phone_number }}</p>
+    <p>Website: <a href="{{ restaurant.website }}" target="_blank">{{ restaurant.website }}</a></p>
+    <p>Google Maps: <a href="{{ restaurant.url }}" target="_blank">View on Google Maps</a></p>
+
+</body>
+</html>

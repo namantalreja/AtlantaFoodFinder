@@ -1,104 +1,31 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atlanta Food Finder</title>
+    <title>Google Maps with Restaurant Search, Rating, and Distance Filter</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB1GIVqhfRZSP9QalUq_B9T0efp69Z4NIA"></script>
     <style>
-        /* Apply a global pastel gradient background */
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, rgba(255, 228, 235, 1) 0%, rgba(235, 241, 255, 1) 100%);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: #4F4F4F;
-        }
-
-        /* Center the content on the page */
-        .container {
-            background-color: #FFFFFF;
-            border-radius: 16px;
-            padding: 40px;
-            width: 100%;
-            max-width: 500px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Styling for the heading */
-        h1 {
-            text-align: center;
-            font-size: 28px;
-            color: #333333;
-            margin-bottom: 20px;
-        }
-
-        /* Style the input fields */
-        input[type="text"],
-        input[type="number"] {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #CCCCCC;
-            margin-bottom: 20px;
-            font-size: 16px;
-            background-color: #F6F8FA;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus,
-        input[type="number"]:focus {
-            border-color: #A6C8FF;
-            outline: none;
-        }
-
-        /* Style the button */
-        button {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: linear-gradient(90deg, #FFB3B3, #FFDDC1);
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        button:hover {
-            background: linear-gradient(90deg, #FF9A9A, #FFBCBC);
-        }
-
-        /* Map container styling */
         #map {
-            height: 400px;
+            height: 500px;
             width: 100%;
-            border-radius: 16px;
-            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Search for Restaurants</h1>
-        <form id="searchForm">
-            <input type="text" id="searchQuery" placeholder="Search for restaurants...">
-            <input type="number" id="minRating" placeholder="Minimum Rating (1-5)" min="1" max="5" step="0.1">
-            <button type="submit">Search</button>
-        </form>
-        <div id="map"></div>
-    </div>
-
+    <h1>Search for Restaurants</h1>
+    <form id="searchForm">
+        <input type="text" id="searchQuery" placeholder="Search for restaurants...">
+        <input type="number" id="minRating" placeholder="Minimum Rating (1-5)" min="1" max="5" step="0.1">
+        <input type="number" id="maxDistance" placeholder="Max Distance (meters)" min="500" max="50000">
+        <button type="submit">Search</button>
+    </form>
+    <div id="map"></div>
     <script>
-        // Initialize an array to hold the markers
         let markers = [];
 
         function initMap() {
-            // Center the map
             const centerLocation = { lat: 33.7490, lng: -84.3880 }; // Example: Atlanta, GA
 
             const map = new google.maps.Map(document.getElementById('map'), {
@@ -106,21 +33,20 @@
                 center: centerLocation,
             });
 
-            // Function to clear all markers from the map
+            const infoWindow = new google.maps.InfoWindow();
+
             function clearMarkers() {
                 markers.forEach(marker => marker.setMap(null));
-                markers = []; // Reset the markers array
+                markers = [];
             }
 
-            // Function to fetch restaurants based on query and rating
-            function fetchRestaurants(query = '', minRating = 0) {
-                fetch(`/map/fetch-restaurants/?query=${query}&min_rating=${minRating}`)
+            function fetchRestaurants(query = '', minRating = 0, maxDistance = 5000) {
+                fetch(`/map/fetch-restaurants/?query=${query}&min_rating=${minRating}&max_distance=${maxDistance}`)
                     .then(response => response.json())
                     .then(data => {
+                        clearMarkers();
                         if (data.results) {
-                            clearMarkers(); // Clear existing markers
                             data.results.forEach(restaurant => {
-                                // Filter by rating
                                 if (restaurant.rating >= minRating) {
                                     const location = {
                                         lat: restaurant.geometry.location.lat,
@@ -129,9 +55,23 @@
                                     const marker = new google.maps.Marker({
                                         position: location,
                                         map: map,
-                                        title: `${restaurant.name} (Rating: ${restaurant.rating})`
+                                        title: restaurant.name
                                     });
-                                    markers.push(marker); // Add the new marker to the array
+
+                                    // Add click event listener to show InfoWindow with restaurant details
+                                    google.maps.event.addListener(marker, 'click', function () {
+                                        const contentString = `
+                                            <div>
+                                                <h2>${restaurant.name}</h2>
+                                                <p>Rating: ${restaurant.rating}</p>
+                                                <p>${restaurant.vicinity}</p>
+                                                <a href="/map/restaurant-details/${restaurant.place_id}" target="_blank">View Details</a>
+                                            </div>`;
+                                        infoWindow.setContent(contentString);
+                                        infoWindow.open(map, marker);
+                                    });
+
+                                    markers.push(marker);
                                 }
                             });
                         } else {
@@ -141,16 +81,15 @@
                     .catch(error => console.error('Error fetching data:', error));
             }
 
-            // Initial fetch without any query to show all nearby restaurants with rating > 0
             fetchRestaurants();
 
-            // Handle form submission to search for restaurants
             document.getElementById('searchForm').addEventListener('submit', function(event) {
                 event.preventDefault();
                 const query = document.getElementById('searchQuery').value;
                 const minRating = parseFloat(document.getElementById('minRating').value) || 0;
-                map.setCenter(centerLocation); // Center map again on new search
-                fetchRestaurants(query, minRating);
+                const maxDistance = parseInt(document.getElementById('maxDistance').value) || 5000;
+                map.setCenter(centerLocation);
+                fetchRestaurants(query, minRating, maxDistance);
             });
         }
 

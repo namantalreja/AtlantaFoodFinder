@@ -14,7 +14,8 @@ from django.contrib.auth.views import PasswordChangeView
 from django.contrib.messages.views import SuccessMessageMixin
 
 from .forms import UpdateUserForm, UpdateProfileForm
-
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
 def home(request):
     return render(request, 'users/home.html')
 
