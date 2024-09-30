@@ -1,31 +1,21 @@
-
 from django.views import View
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView, PasswordResetView
 from .forms import RegisterForm, LoginForm
 from django.urls import reverse_lazy
-from django.contrib.auth.views import PasswordResetView
 from django.contrib.messages.views import SuccessMessageMixin
-from .forms import RegisterForm
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.urls import reverse_lazy
-from django.contrib.auth.views import PasswordChangeView
-from django.contrib.messages.views import SuccessMessageMixin
-from django.shortcuts import render
-import requests
-from django.http import JsonResponse
 from django.conf import settings
-import os
-from dotenv import load_dotenv
-
-from django.shortcuts import redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from .models import FavoriteRestaurant
-
+from .models import FavoriteRestaurant, Profile  # Make sure Profile is imported here
 from .forms import UpdateUserForm, UpdateProfileForm
-from django.shortcuts import redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+import os
+import requests
+from dotenv import load_dotenv
+from django.http import JsonResponse
+from django.contrib.auth import login
+
+
 def home(request):
     return render(request, 'users/home.html')
 
@@ -47,11 +37,9 @@ class RegisterView(View):
     template_name = 'users/register.html'
 
     def dispatch(self, request, *args, **kwargs):
-        # will redirect to the home page if a user tries to access the register page while logged in
+        # Redirect to home page if a user is already logged in
         if request.user.is_authenticated:
-            return redirect(to='/')
-
-        # else process dispatch as it otherwise normally would
+            return redirect('users-home')
         return super(RegisterView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
@@ -60,16 +48,17 @@ class RegisterView(View):
 
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST)
-
         if form.is_valid():
-            form.save()
-
+            user = form.save()
+            # Automatically log in the user after registration
+            login(request, user)  # Log in the user after registration
             username = form.cleaned_data.get('username')
             messages.success(request, f'Account created for {username}')
-
-            return redirect(to='/')
-
+            return redirect('users-home')
+        else:
+            messages.error(request, f'Error: {form.errors}')
         return render(request, self.template_name, {'form': form})
+
 
 class CustomLoginView(LoginView):
     form_class = LoginForm
@@ -78,23 +67,19 @@ class CustomLoginView(LoginView):
         remember_me = form.cleaned_data.get('remember_me')
 
         if not remember_me:
-            # set session expiry to 0 seconds. So it will automatically close the session after the browser is closed.
+            # Set session expiry to 0 seconds. It will automatically close the session after the browser is closed.
             self.request.session.set_expiry(0)
-
-            # Set session as modified to force data updates/cookie to be saved.
+            # Force session updates to ensure the cookie gets modified
             self.request.session.modified = True
 
-        # else browser session will be as long as the session cookie time "SESSION_COOKIE_AGE" defined in settings.py
         return super(CustomLoginView, self).form_valid(form)
+
 
 @login_required
 def add_to_favorites(request, place_id):
-    # Get restaurant details using the place_id (this would be fetched from Google API in real use)
-    restaurant_name = request.GET.get('name')  # Assuming name is passed in the request
+    restaurant_name = request.GET.get('name')
 
-    # Check if this restaurant is already in user's favorites
     if not FavoriteRestaurant.objects.filter(user=request.user, restaurant_place_id=place_id).exists():
-        # Create a new FavoriteRestaurant entry
         FavoriteRestaurant.objects.create(
             user=request.user,
             restaurant_name=restaurant_name,
@@ -102,6 +87,7 @@ def add_to_favorites(request, place_id):
         )
 
     return redirect('restaurant_details', place_id=place_id)
+
 
 @login_required
 def view_favorites(request):
@@ -111,6 +97,10 @@ def view_favorites(request):
 
 @login_required
 def profile(request):
+    # Ensure the user has a profile, if not, create one
+    if not hasattr(request.user, 'profile'):
+        Profile.objects.create(user=request.user)
+
     if request.method == 'POST':
         user_form = UpdateUserForm(request.POST, instance=request.user)
         profile_form = UpdateProfileForm(request.POST, request.FILES, instance=request.user.profile)
@@ -118,27 +108,31 @@ def profile(request):
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
             profile_form.save()
-            messages.success(request, 'Your profile is updated successfully')
-            return redirect(to='users-profile')
+            messages.success(request, 'Your profile has been updated successfully')
+            return redirect('users-profile')
     else:
         user_form = UpdateUserForm(instance=request.user)
         profile_form = UpdateProfileForm(instance=request.user.profile)
 
     return render(request, 'users/profile.html', {'user_form': user_form, 'profile_form': profile_form})
 
+
 class ChangePasswordView(SuccessMessageMixin, PasswordChangeView):
     template_name = 'users/change_password.html'
-    success_message = "Successfully Changed Your Password"
+    success_message = "Your password has been changed successfully"
     success_url = reverse_lazy('users-home')
 
 
-
+# Load environment variables from .env file
 load_dotenv()
+
+
 def show_map(request):
     return render(request, 'users/map.html')
 
+
 def restaurant_details(request, place_id):
-    api_key = str(os.getenv('API_KEY'))  # Replace with your API key
+    api_key = os.getenv('API_KEY')
     url = f"https://maps.googleapis.com/maps/api/place/details/json?place_id={place_id}&key={api_key}"
 
     response = requests.get(url)
@@ -147,17 +141,18 @@ def restaurant_details(request, place_id):
         return render(request, 'users/restaurant_details.html', {'restaurant': restaurant})
     else:
         return render(request, 'users/restaurant_details.html', {'error': 'Failed to fetch restaurant details'})
+
+
 def fetch_restaurants(request):
     latitude = 33.7490  # Example: Atlanta, GA
     longitude = -84.3880
     default_radius = 5000  # Default radius in meters (5 km)
-    api_key = 'AIzaSyB1GIVqhfRZSP9QalUq_B9T0efp69Z4NIA'   # Replace with your API key
+    api_key = os.getenv('API_KEY')
 
     query = request.GET.get('query', '')  # Get the search query from request
     min_rating = float(request.GET.get('min_rating', 0))  # Get the minimum rating, default is 0
     radius = int(request.GET.get('max_distance', default_radius))  # Get the maximum distance, default is 5000 meters
 
-    # Limit the radius to Google's max of 50,000 meters
     if radius > 50000:
         radius = 50000
 
@@ -175,7 +170,7 @@ def fetch_restaurants(request):
 
     all_results = []
 
-    # Request the first page
+    # Request the first page of results
     response = requests.get(base_url)
     if response.status_code == 200:
         data = response.json()

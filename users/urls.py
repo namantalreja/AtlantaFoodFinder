@@ -1,4 +1,3 @@
-
 from django.urls import path
 from .views import home, RegisterView, ResetPasswordView  # Import the view here
 from django.contrib.auth import views as auth_views
