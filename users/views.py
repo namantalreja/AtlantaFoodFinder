@@ -19,6 +19,10 @@ from django.conf import settings
 import os
 from dotenv import load_dotenv
 
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import FavoriteRestaurant
+
 from .forms import UpdateUserForm, UpdateProfileForm
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -82,6 +86,28 @@ class CustomLoginView(LoginView):
 
         # else browser session will be as long as the session cookie time "SESSION_COOKIE_AGE" defined in settings.py
         return super(CustomLoginView, self).form_valid(form)
+
+@login_required
+def add_to_favorites(request, place_id):
+    # Get restaurant details using the place_id (this would be fetched from Google API in real use)
+    restaurant_name = request.GET.get('name')  # Assuming name is passed in the request
+
+    # Check if this restaurant is already in user's favorites
+    if not FavoriteRestaurant.objects.filter(user=request.user, restaurant_place_id=place_id).exists():
+        # Create a new FavoriteRestaurant entry
+        FavoriteRestaurant.objects.create(
+            user=request.user,
+            restaurant_name=restaurant_name,
+            restaurant_place_id=place_id,
+        )
+
+    return redirect('restaurant_details', place_id=place_id)
+
+@login_required
+def view_favorites(request):
+    favorites = FavoriteRestaurant.objects.filter(user=request.user)
+    return render(request, 'users/favorites.html', {'favorites': favorites})
+
 
 @login_required
 def profile(request):

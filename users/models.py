@@ -21,3 +21,12 @@ class Profile(models.Model):
             new_img = (100, 100)
             img.thumbnail(new_img)
             img.save(self.avatar.path)
+
+class FavoriteRestaurant(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    restaurant_name = models.CharField(max_length=255)
+    restaurant_place_id = models.CharField(max_length=255)  # The Google Place ID for the restaurant
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.restaurant_name} favorited by {self.user.username}"

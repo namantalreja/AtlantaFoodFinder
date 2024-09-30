@@ -22,4 +22,6 @@ urlpatterns = [
     path('restaurant-details/<str:place_id>/', views.restaurant_details, name='restaurant_details'),
     path('fetch-restaurants/', views.fetch_restaurants, name='fetch_restaurants'),
     path('map/', views.show_map, name='show_map'),
+    path('add-to-favorites/<str:place_id>/', views.add_to_favorites, name='add_to_favorites'),
+    path('favorites/', views.view_favorites, name='view_favorites'),
 ]

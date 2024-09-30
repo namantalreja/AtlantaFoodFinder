@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Favorite Restaurants</title>
+</head>
+<body>
+    <h1>Your Favorite Restaurants</h1>
+
+    <ul>
+        {% for favorite in favorites %}
+            <li>
+                <h2>{{ favorite.restaurant_name }}</h2>
+                <a href="{% url 'restaurant_details' favorite.restaurant_place_id %}">View Details</a>
+            </li>
+        {% empty %}
+            <p>You have no favorite restaurants yet.</p>
+        {% endfor %}
+    </ul>
+
+</body>
+</html>
