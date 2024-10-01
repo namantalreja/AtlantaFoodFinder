@@ -7,7 +7,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', home, name='users-home'),
+    path('', views.show_map, name='users_home'),
     path('register/', RegisterView.as_view(), name='users-register'),  # This is what we added
     path('password-reset/', ResetPasswordView.as_view(), name='password_reset'),
     path('password-reset-confirm/<uidb64>/<token>/',

@@ -1,84 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Maps with Restaurant Search, Rating, and Distance Filter</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB1GIVqhfRZSP9QalUq_B9T0efp69Z4NIA"></script>
-    <style>
-        body {
-            background-color: #d5e7f3; /* Pastel blue background */
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+{% extends 'users/base.html' %}
 
-        .container {
-            display: flex;
-            width: 100%;
-            max-width: 1200px;
-        }
+{% block title %}Google Maps with Restaurant Search, Rating, and Distance Filter{% endblock %}
 
-        .form-column {
-            flex: 1;
-            margin-right: 80px;
-        }
-
-        .form-column form {
-            display: flex;
-            flex-direction: column;
-        }
-
-        input, button {
-            width: 100%;
-            margin: 10px 0;
-            padding: 12px;
-            border: none;
-            border-radius: 5px;
-            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-            font-size: 16px;
-        }
-
-        button {
-            background-color: #f3b6c4;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .map-column {
-            flex: 2;
-        }
-
-        #map {
-            height: 500px;
-            width: 100%;
-            border-radius: 10px;
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="form-column">
-            <h1>Search for Restaurants</h1>
-            <form id="searchForm">
-                <input type="text" id="searchQuery" placeholder="Search for restaurants...">
-                <input type="number" id="minRating" placeholder="Minimum Rating (1-5)" min="1" max="5" step="0.1">
-                <input type="number" id="maxDistance" placeholder="Max Distance (meters)" min="500" max="50000">
-                <button type="submit">Search</button>
-            </form>
+{% block content %}
+{% if user.is_authenticated %}
+    <div class="container p-3 my-3">
+        <div class="row">
+            <div class="col-md-12">
+                <h1>Search for Restaurants</h1>
+                <form id="searchForm">
+                    <input type="text" id="searchQuery" placeholder="Search for restaurants..." class="form-control">
+                    <input type="number" id="minRating" placeholder="Minimum Rating (1-5)" min="1" max="5" step="0.1" class="form-control mt-3">
+                    <input type="number" id="maxDistance" placeholder="Max Distance (meters)" min="500" max="50000" class="form-control mt-3">
+                    <button type="submit" class="btn btn-primary mt-3">Search</button>
+                </form>
+            </div>
         </div>
-        <div class="map-column">
-            <div id="map"></div>
+        <div class="row mt-5">
+            <div class="col-md-12">
+                <div id="map" style="height: 500px; width: 100%; border-radius: 10px;"></div>
+            </div>
         </div>
     </div>
 
@@ -163,5 +104,21 @@
 
         window.onload = initMap;
     </script>
-</body>
-</html>
+
+    <!-- Include Google Maps API script -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB1GIVqhfRZSP9QalUq_B9T0efp69Z4NIA"></script>
+ {% else %}
+<div class="jumbotron">
+    <h1 class="display-4">Welcome</h1>
+            <p class="lead">
+                This is <b>user registration and login system</b> build with django which is
+                a Python-based free and open-source web framework that follows the model–template–views architectural pattern.
+            </p>
+            <hr class="my-4">
+            <p class="lead">
+                <a class="btn btn-primary btn-lg" href="{% url 'logout' %}" role="button">Logout</a>
+                <a class="btn btn-primary btn-lg" href="{% url 'login' %}" role="button">Sign in</a>
+            </p>
+     </div>
+        {% endif %}
+{% endblock %}

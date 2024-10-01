@@ -1,20 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Favorite Restaurants</title>
-    <style>
-        body {
-            background-color: #d5e7f3; /* Pastel blue background */
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+{% extends 'users/base.html' %}
 
+{% block title %}Your Favorite Restaurants{% endblock %}
+
+{% block content %}
+    <div class="container-fluid p-3 my-3"> <!-- Changed to container-fluid for full width -->
+        <h1 class="text-center">Your Favorite Restaurants</h1>
+
+        <ul class="restaurant-list w-100">
+            {% for favorite in favorites %}
+                <li class="restaurant-item">
+                    <span class="restaurant-number">{{ forloop.counter }}.</span>
+                    <h2>{{ favorite.restaurant_name }}</h2>
+                    <a href="{% url 'restaurant_details' favorite.restaurant_place_id %}">View Details</a>
+                </li>
+            {% empty %}
+                <li class="empty-message">You have no favorite restaurants yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <style>
         h1 {
             color: #333;
             margin-bottom: 20px;
@@ -25,8 +30,7 @@
         .restaurant-list {
             list-style-type: none;
             padding: 0;
-            width: 100%;
-            max-width: 800px; /* Max width for larger screens */
+            margin: 0;
         }
 
         .restaurant-item {
@@ -35,10 +39,11 @@
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
             padding: 20px;
             margin: 10px 0;
-            display: flex; /* Flexbox for alignment */
-            align-items: center; /* Center vertically */
-            justify-content: space-between; /* Space between number and name */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            width: 100%; /* Ensures full width for the restaurant items */
         }
 
         .restaurant-item:hover {
@@ -46,27 +51,27 @@
             box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
         }
 
-        h2 {
+        .restaurant-item h2 {
             color: #4a4a4a;
             margin: 0;
-            font-size: 1.5em; /* Slightly smaller font size */
-            flex: 1; /* Allow name to take remaining space */
+            font-size: 1.5em;
+            flex: 1;
         }
 
         .restaurant-number {
-            font-size: 1.5em; /* Same size as restaurant name */
+            font-size: 1.5em;
             color: #4a4a4a;
-            margin-right: 10px; /* Space between number and restaurant name */
+            margin-right: 10px;
         }
 
-        a {
-            color: white; /* Link color */
+        .restaurant-item a {
+            color: white;
             text-decoration: none;
             font-weight: bold;
             display: inline-block;
-            margin-left: 20px; /* Space between name and button */
+            margin-left: 20px;
             padding: 10px 15px;
-            background-color: #f3b6c4; /* Pastel pink */
+            background-color: #f3b6c4;
             border-radius: 5px;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
@@ -75,23 +80,10 @@
             color: #777;
             font-size: 1.2em;
             text-align: center;
+
+        }
+        .container-fluid{
+            background-color: white;
         }
     </style>
-</head>
-<body>
-    <h1>Your Favorite Restaurants</h1>
-
-    <ul class="restaurant-list">
-        {% for favorite in favorites %}
-            <li class="restaurant-item">
-                <span class="restaurant-number">{{ forloop.counter }}.</span>
-                <h2>{{ favorite.restaurant_name }}</h2>
-                <a href="{% url 'restaurant_details' favorite.restaurant_place_id %}">View Details</a>
-            </li>
-        {% empty %}
-            <li class="empty-message">You have no favorite restaurants yet.</li>
-        {% endfor %}
-    </ul>
-
-</body>
-</html>
+{% endblock %}
